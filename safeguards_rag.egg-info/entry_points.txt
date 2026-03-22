@@ -1,0 +1,2 @@
+[console_scripts]
+safeguards-rag = cli:app

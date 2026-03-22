@@ -1,0 +1,65 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "safeguards-rag"
+version = "0.1.0"
+description = "Adaptive RAG agent for trust & safety operations"
+requires-python = ">=3.11"
+readme = "README.md"
+license = { text = "MIT" }
+
+dependencies = [
+    "langchain>=0.2",
+    "langgraph>=0.1",
+    "langsmith>=0.1",
+    "langchain-anthropic>=0.1",
+    "langchain-openai>=0.1",
+    "snowflake-connector-python>=3.0",
+    "pgvector>=0.2",
+    "psycopg2-binary>=2.9",
+    "pydantic>=2.0",
+    "typer>=0.12",
+    "streamlit>=1.35",
+    "jinja2>=3.1",
+    "pyyaml>=6.0",
+    "great-expectations>=0.18",
+    "sqlalchemy>=2.0",
+    "numpy>=1.26",
+    "pandas>=2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.4",
+    "mypy>=1.10",
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "types-pyyaml",
+    "types-jinja2",
+]
+
+[project.scripts]
+safeguards-rag = "cli:app"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

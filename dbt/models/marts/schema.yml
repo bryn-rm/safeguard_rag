@@ -1,0 +1,165 @@
+version: 2
+
+models:
+  - name: fct_signals
+    description: >
+      Incremental fact table of all safety signals. Joins classifier outputs,
+      user reports, enforcement logs, and model outputs into a single denormalised
+      record per signal event. High-watermark column: _loaded_at.
+    columns:
+      - name: signal_id
+        description: Unique identifier for the safety signal (UUID).
+        tests:
+          - not_null
+          - unique
+      - name: model_id
+        description: Identifier of the model that produced the signal.
+        tests:
+          - not_null
+      - name: entity_id
+        description: Identifier of the entity (user or content) that was classified.
+        tests:
+          - not_null
+      - name: label
+        description: Predicted safety label assigned by the classifier.
+        tests:
+          - not_null
+      - name: score
+        description: Raw classifier probability score in [0.0, 1.0].
+        tests:
+          - not_null
+      - name: threshold
+        description: Decision threshold used to determine is_positive.
+        tests:
+          - not_null
+      - name: is_positive
+        description: True when score >= threshold (positive safety signal).
+        tests:
+          - not_null
+          - accepted_values:
+              values: [true, false]
+      - name: signal_timestamp
+        description: UTC timestamp when the signal was produced.
+        tests:
+          - not_null
+      - name: signal_type
+        description: Signal category (classifier, report, enforcement, model_output).
+        tests:
+          - not_null
+          - accepted_values:
+              values: [classifier, report, enforcement, model_output]
+      - name: _loaded_at
+        description: UTC timestamp when the record was loaded into Snowflake.
+        tests:
+          - not_null
+      - name: was_enforced
+        description: >
+          True when this positive signal resulted in an enforcement action
+          within 24 hours against the same entity.
+        tests:
+          - not_null
+          - accepted_values:
+              values: [true, false]
+
+  - name: dim_entities
+    description: >
+      Dimension table of unique entities (users or content items) observed
+      across all signal types. Aggregates signal counts and enforcement history.
+    columns:
+      - name: entity_id
+        description: Unique entity identifier.
+        tests:
+          - not_null
+          - unique
+      - name: first_seen_at
+        description: UTC timestamp of the entity's earliest signal.
+        tests:
+          - not_null
+      - name: last_seen_at
+        description: UTC timestamp of the entity's most recent signal.
+        tests:
+          - not_null
+      - name: total_signals
+        description: Total number of safety signals involving this entity.
+        tests:
+          - not_null
+      - name: positive_signal_count
+        description: Count of signals where is_positive = true.
+        tests:
+          - not_null
+      - name: enforcement_count
+        description: Count of enforcement actions taken against this entity.
+        tests:
+          - not_null
+
+  - name: dim_models
+    description: >
+      Dimension table of classifier and generative models observed in signals.
+      Summarises signal volume and average score per model.
+    columns:
+      - name: model_id
+        description: Model identifier.
+        tests:
+          - not_null
+          - unique
+      - name: signal_type
+        description: Primary signal type produced by this model.
+        tests:
+          - not_null
+      - name: first_seen_at
+        description: UTC timestamp when this model first appeared in signals.
+        tests:
+          - not_null
+      - name: last_seen_at
+        description: UTC timestamp of the model's most recent signal.
+        tests:
+          - not_null
+      - name: total_signals
+        description: Total signals produced by this model.
+        tests:
+          - not_null
+      - name: avg_score
+        description: Mean classifier score across all signals from this model.
+      - name: positive_rate
+        description: Fraction of signals from this model where is_positive = true.
+
+  - name: dim_actions
+    description: >
+      Dimension table of enforcement actions taken against entities. Each row
+      represents one action event. FK: signal_id → fct_signals.signal_id.
+    columns:
+      - name: action_id
+        description: Unique identifier for the enforcement action.
+        tests:
+          - not_null
+          - unique
+      - name: entity_id
+        description: Entity against which the action was taken.
+        tests:
+          - not_null
+      - name: action_type
+        description: Type of enforcement action applied.
+        tests:
+          - not_null
+          - accepted_values:
+              values: [warn, suspend, ban, content_removal, shadowban, escalate]
+      - name: policy_id
+        description: Policy that triggered this enforcement action.
+        tests:
+          - not_null
+      - name: enforced_by
+        description: Agent (human or automated) that executed the action.
+        tests:
+          - not_null
+      - name: enforcement_reason
+        description: Human-readable reason for the action.
+        tests:
+          - not_null
+      - name: action_timestamp
+        description: UTC timestamp when the action was executed.
+        tests:
+          - not_null
+      - name: signal_id
+        description: FK to fct_signals — the signal that triggered this action.
+        tests:
+          - not_null

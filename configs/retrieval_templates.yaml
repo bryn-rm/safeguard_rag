@@ -1,0 +1,62 @@
+# Retrieval SQL template registry
+# Maps template names to file paths and declares required parameters with types.
+# All templates live in src/retrieval/templates/.
+# Parameters are type-checked at runtime before rendering.
+
+templates:
+  - name: classifier_precision
+    file: classifier_precision.sql
+    description: >
+      Daily precision metrics for a specific classifier model over a date range.
+      Joins fct_signals against dim_actions to count true positives.
+    parameters:
+      - name: model_id
+        type: str
+        description: Classifier model identifier (e.g. "toxicity-v3")
+      - name: start_date
+        type: str
+        description: Inclusive start of the date range (ISO 8601, UTC)
+      - name: end_date
+        type: str
+        description: Exclusive end of the date range (ISO 8601, UTC)
+      - name: schema
+        type: str
+        description: Snowflake schema name (e.g. "marts")
+
+  - name: enforcement_rate
+    file: enforcement_rate.sql
+    description: >
+      Daily enforcement counts and rate relative to total signals for a
+      specific action type over a date range.
+    parameters:
+      - name: action_type
+        type: str
+        description: Enforcement action type (e.g. "ban", "warn", "suspend")
+      - name: start_date
+        type: str
+        description: Inclusive start of the date range (ISO 8601, UTC)
+      - name: end_date
+        type: str
+        description: Exclusive end of the date range (ISO 8601, UTC)
+      - name: schema
+        type: str
+        description: Snowflake schema name (e.g. "marts")
+
+  - name: report_volume
+    file: report_volume.sql
+    description: >
+      Hourly report submission counts for a specific report type, broken down
+      by severity tier. Includes unique reporter and entity counts.
+    parameters:
+      - name: report_type
+        type: str
+        description: Report category (e.g. "harassment", "spam", "hate_speech")
+      - name: start_date
+        type: str
+        description: Inclusive start of the date range (ISO 8601, UTC)
+      - name: end_date
+        type: str
+        description: Exclusive end of the date range (ISO 8601, UTC)
+      - name: schema
+        type: str
+        description: Snowflake schema name (e.g. "marts")

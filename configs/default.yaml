@@ -1,0 +1,35 @@
+# Default pipeline configuration for safeguards-rag
+# Override individual values via environment variables or a local config file.
+
+pipeline:
+  confidence_threshold: 0.5       # Minimum score to accept an answer without retry
+  max_retries: 2                  # Maximum number of retrieval retries per query
+
+models:
+  router: "claude-haiku-4-5-20251001"          # Fast model for routing decisions
+  synthesiser: "claude-sonnet-4-6"             # High-quality model for answer synthesis
+  scorer: "claude-sonnet-4-6"                  # Same model for confidence scoring
+  embedding: "text-embedding-3-small"          # OpenAI embedding model
+
+retrieval:
+  vector_top_k: 10                # Candidates retrieved before MMR reranking
+  vector_final_k: 5               # Documents returned after MMR reranking
+  mmr_lambda: 0.5                 # MMR lambda (1.0 = pure relevance, 0.0 = pure diversity)
+  sql_row_limit: 100              # Maximum rows returned by SQL templates
+
+freshness:
+  freshness_window_minutes:
+    classifier: 15                # Alert if no new classifier signals in 15 min
+    report: 60                    # Alert if no new user reports in 60 min
+    enforcement: 60               # Alert if no new enforcement logs in 60 min
+    model_output: 30              # Alert if no new model outputs in 30 min
+
+snowflake:
+  database: "safeguards_rag"
+  schema: "marts"
+  warehouse: "compute_wh"
+
+langsmith:
+  project: "safeguards-rag"
+  eval_dataset: "safeguards-rag-eval"
+  curation_confidence_threshold: 0.5  # Save runs below this score to eval dataset
