@@ -86,3 +86,6 @@ langchain.db
 # Logs
 *.log
 logs/
+
+# Generated data files (synthetic signals, dead letters)
+data/*.jsonl
